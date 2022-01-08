@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet'
 import axios from 'axios'
 import { nanoid } from 'nanoid'
 
 import Loading from '../Loading'
 import Sidebar from '../Sidebar'
+import Detail from '../Detail'
 import Faults from '../Faults'
 
 function Map() {
@@ -15,6 +16,8 @@ function Map() {
   const [errorMessage, setErrorMessage] = useState('')
 
   // Filters
+  const [selectedQuake, setselectedQuake] = useState('')
+  const [toggleDetail, setToggleDetail] = useState(false)
   const [toggleFaults, setToggleFaults] = useState(false)
   const [count, setCount] = useState(100)
   const [minMagnitude, setMinMagnitude] = useState(0)
@@ -45,17 +48,9 @@ function Map() {
     }
   }
 
-  function getInfo(quake) {
-    return `PLACE: ${quake.place} ${quake.city}\n
-DATE: ${quake.date} ${quake.time}\n
-MAGNITUDE: ${quake.magnitude}\n
-DEPTH: ${quake.depth}`
-  }
-
   return (
     <>
       <div className="row" style={{ height: '92%' }}>
-        {/* Left frame for filters */}
         <Sidebar
           toggleFaults={toggleFaults}
           setToggleFaults={setToggleFaults}
@@ -66,24 +61,11 @@ DEPTH: ${quake.depth}`
           setMaxMagnitude={setMaxMagnitude}
         />
 
-        {/* Main Frame for map */}
-        <div className="col-md-11 map">
-          {/* Loading & Error Screen */}
+        <div className="col-md-12 map">
           {loading && <Loading error={error} errorMessage={errorMessage} />}
 
-          {/* Map */}
           {!loading && (
-            <MapContainer
-              center={[39, 35]}
-              zoom={6}
-              // scrollWheelZoom={false}
-              // doubleClickZoom={false}
-              // dragging={false}
-              // zoomSnap={false}
-              // zoomDelta={false}
-              // trackResize={false}
-              // touchZoom={false}
-            >
+            <MapContainer center={[39, 35]} zoom={6}>
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -92,9 +74,7 @@ DEPTH: ${quake.depth}`
               {toggleFaults && <Faults />}
 
               {quakes
-                // Filter by count
                 .slice(0, count)
-                // Filter by magnitude
                 .filter(
                   (quake) =>
                     quake.magnitude >= minMagnitude &&
@@ -108,14 +88,25 @@ DEPTH: ${quake.depth}`
                       center={[quake.latitude, quake.longitude]}
                       pathOptions={{ color: getColor(quake.magnitude) }}
                       radius={quake.magnitude * 5}
-                    >
-                      <Popup>{getInfo(quake)}</Popup>
-                    </CircleMarker>
+                      eventHandlers={{
+                        click: (e) => {
+                          setselectedQuake(quake)
+                          setToggleDetail(true)
+                        }
+                      }}
+                    ></CircleMarker>
                   )
                 })}
             </MapContainer>
           )}
         </div>
+        {toggleDetail && (
+          <Detail
+            toggleDetail={toggleDetail}
+            setToggleDetail={setToggleDetail}
+            selectedQuake={selectedQuake}
+          />
+        )}
       </div>
     </>
   )

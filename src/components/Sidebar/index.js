@@ -18,7 +18,7 @@ function Sidebar({
   }
 
   return (
-    <div className="col-md-1 column sidebar">
+    <div className="sidebar">
       <button className="btn btn-info" onClick={() => handleToggle()}>
         Toggle Fault Lines
       </button>
